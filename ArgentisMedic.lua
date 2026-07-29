@@ -1,6 +1,6 @@
 -- [[ Argentis |cffff0000Medic|r ]]
 -- Author:  ThePeregris
--- Version: 1.3 (+ Smart Button /agmed pra macro única)
+-- Version: 1.4 (Abas renomeadas: Heal/Mana/Recovery)
 -- Target:  Turtle WoW (1.12 / LUA 5.0)
 -- Requires: Argentis Core v1.3+
 
@@ -264,24 +264,24 @@ local function BuildGeneralTab(content, db)
     info:SetWidth(380)
     info:SetJustifyH("LEFT")
     info:SetText(
-        "|cffffcc00Atalho 1 - Cura|r\n" ..
+        "|cffffcc00Heal (Atalho 1)|r\n" ..
         "Avisa o jogador quando a HP estiver abaixo do nível configurado.\n" ..
         "Comando (macro): |cffffffff/agmed1|r\n" ..
         "Utiliza Poções de Cura / Healthstones quando pressionado.\n\n" ..
 
-        "|cffffcc00Atalho 2 - Mana|r\n" ..
+        "|cffffcc00Mana (Atalho 2)|r\n" ..
         "Avisa o jogador quando a Mana estiver abaixo do nível configurado.\n" ..
         "Comando (macro): |cffffffff/agmed2|r\n" ..
         "Utiliza Poções de Mana quando pressionado.\n\n" ..
 
-        "|cffffcc00Atalho 3 - Pós-Combate|r\n" ..
+        "|cffffcc00Recovery (Atalho 3)|r\n" ..
         "Executa fora de combate, se a HP estiver abaixo do nível configurado.\n" ..
         "Comando (macro): |cffffffff/agmed3|r\n" ..
         "Utiliza Bandagem e/ou Comida (conforme configurado) quando pressionado.\n\n" ..
 
         "|cffffcc00Botão Único (opcional)|r\n" ..
         "Comando (macro): |cffffffff/agmed|r\n" ..
-        "ALT = Mana | Em combate = Cura | Fora de combate = Pós-Combate."
+        "ALT = Mana | Em combate = Heal | Fora de combate = Recovery."
     )
 end
 
@@ -327,10 +327,10 @@ local medicPanel = nil
 local function ToggleMedicPanel()
     if not medicPanel then
         medicPanel = UI.CreatePanel("Argentis Medic", ArgentisMedDB, {
-            { title = "Geral",   build = BuildGeneralTab },
-            { title = "Atalho 1", build = BuildHealTab },
-            { title = "Atalho 2", build = BuildManaTab },
-            { title = "Atalho 3", build = BuildPostTab }
+            { title = "Geral",    build = BuildGeneralTab },
+            { title = "Heal",     build = BuildHealTab },
+            { title = "Mana",     build = BuildManaTab },
+            { title = "Recovery", build = BuildPostTab }
         })
     end
     UI.TogglePanel(medicPanel)
@@ -354,6 +354,6 @@ loadFrame:SetScript("OnEvent", function()
     Core.RegisterPanelCommand("medic", ToggleMedicPanel)
     Core.RegisterModuleCommand("ArgentisMedic", "/ag medic")
 
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.3 Loaded.")
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.4 Loaded.")
     DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r Configuração: |cffffffff/ag medic|r")
 end)
