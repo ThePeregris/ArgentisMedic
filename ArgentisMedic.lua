@@ -1,6 +1,6 @@
 -- [[ Argentis |cffff0000Medic|r ]]
 -- Author:  ThePeregris
--- Version: 1.2 (Combat Sustain + Post-Combat Recovery + Detailed Info Tab + Command Self-Registration)
+-- Version: 1.3 (+ Smart Button /agmed pra macro única)
 -- Target:  Turtle WoW (1.12 / LUA 5.0)
 -- Requires: Argentis Core v1.3+
 
@@ -184,6 +184,29 @@ SLASH_AGMED2_1 = "/agmed2"; SlashCmdList["AGMED2"] = Medic.Shortcut2_Mana
 SLASH_AGMED3_1 = "/agmed3"; SlashCmdList["AGMED3"] = Medic.Shortcut3_PostCombat
 
 -- ==========================================
+-- [3.1] BOTÃO ÚNICO (SMART BUTTON)
+-- ==========================================
+-- Vanilla 1.12 não tem macro condicional ([combat]/[mod:alt]/etc — isso só
+-- existe em expansões posteriores). A decisão precisa acontecer aqui no
+-- Lua; a macro do jogador vira só uma linha: /agmed
+--
+-- Prioridade: ALT (qualquer estado) > Em combate > Fora de combate
+function Medic.SmartButton()
+    if IsAltKeyDown() then
+        Medic.Shortcut2_Mana()
+        return
+    end
+
+    if UnitAffectingCombat("player") then
+        Medic.Shortcut1_Heal()
+    else
+        Medic.Shortcut3_PostCombat()
+    end
+end
+
+SLASH_AGMEDBTN1 = "/agmed"; SlashCmdList["AGMEDBTN"] = Medic.SmartButton
+
+-- ==========================================
 -- [4] PAINEL DE CONFIGURAÇÃO ("/ag medic")
 -- ==========================================
 local function CreateThresholdField(parent, label, x, y, getValue, setValue)
@@ -254,7 +277,11 @@ local function BuildGeneralTab(content, db)
         "|cffffcc00Atalho 3 - Pós-Combate|r\n" ..
         "Executa fora de combate, se a HP estiver abaixo do nível configurado.\n" ..
         "Comando (macro): |cffffffff/agmed3|r\n" ..
-        "Utiliza Bandagem e/ou Comida (conforme configurado) quando pressionado."
+        "Utiliza Bandagem e/ou Comida (conforme configurado) quando pressionado.\n\n" ..
+
+        "|cffffcc00Botão Único (opcional)|r\n" ..
+        "Comando (macro): |cffffffff/agmed|r\n" ..
+        "ALT = Mana | Em combate = Cura | Fora de combate = Pós-Combate."
     )
 end
 
@@ -327,6 +354,6 @@ loadFrame:SetScript("OnEvent", function()
     Core.RegisterPanelCommand("medic", ToggleMedicPanel)
     Core.RegisterModuleCommand("ArgentisMedic", "/ag medic")
 
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.2 Loaded.")
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.3 Loaded.")
     DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r Configuração: |cffffffff/ag medic|r")
 end)
