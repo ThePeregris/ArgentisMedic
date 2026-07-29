@@ -1,6 +1,6 @@
 -- [[ Argentis |cffff0000Medic|r ]]
 -- Author:  ThePeregris
--- Version: 1.0 (Combat Sustain + Post-Combat Recovery)
+-- Version: 1.1 (Combat Sustain + Post-Combat Recovery + Detailed Info Tab)
 -- Target:  Turtle WoW (1.12 / LUA 5.0)
 -- Requires: Argentis Core v1.3+
 
@@ -236,11 +236,26 @@ local function BuildGeneralTab(content, db)
         function() return db.Enabled end,
         function(v) db.Enabled = v end)
 
-    local info = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    local info = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     info:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -30)
-    info:SetWidth(360)
+    info:SetWidth(380)
     info:SetJustifyH("LEFT")
-    info:SetText("Atalho 1: Cura | Atalho 2: Mana | Atalho 3: Pós-Combate (Bandage/Comida)")
+    info:SetText(
+        "|cffffcc00Atalho 1 - Cura|r\n" ..
+        "Avisa o jogador quando a HP estiver abaixo do nível configurado.\n" ..
+        "Comando (macro): |cffffffff/agmed1|r\n" ..
+        "Utiliza Poções de Cura / Healthstones quando pressionado.\n\n" ..
+
+        "|cffffcc00Atalho 2 - Mana|r\n" ..
+        "Avisa o jogador quando a Mana estiver abaixo do nível configurado.\n" ..
+        "Comando (macro): |cffffffff/agmed2|r\n" ..
+        "Utiliza Poções de Mana quando pressionado.\n\n" ..
+
+        "|cffffcc00Atalho 3 - Pós-Combate|r\n" ..
+        "Executa fora de combate, se a HP estiver abaixo do nível configurado.\n" ..
+        "Comando (macro): |cffffffff/agmed3|r\n" ..
+        "Utiliza Bandagem e/ou Comida (conforme configurado) quando pressionado."
+    )
 end
 
 local function BuildHealTab(content, db)
@@ -311,6 +326,6 @@ loadFrame:SetScript("OnEvent", function()
 
     Core.RegisterPanelCommand("medic", ToggleMedicPanel)
 
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.0 Loaded.")
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.1 Loaded.")
     DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r Configuração: |cffffffff/ag medic|r")
 end)
