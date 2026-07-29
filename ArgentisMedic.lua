@@ -1,6 +1,6 @@
 -- [[ Argentis |cffff0000Medic|r ]]
 -- Author:  ThePeregris
--- Version: 1.1 (Combat Sustain + Post-Combat Recovery + Detailed Info Tab)
+-- Version: 1.2 (Combat Sustain + Post-Combat Recovery + Detailed Info Tab + Command Self-Registration)
 -- Target:  Turtle WoW (1.12 / LUA 5.0)
 -- Requires: Argentis Core v1.3+
 
@@ -325,7 +325,8 @@ loadFrame:SetScript("OnEvent", function()
     end
 
     Core.RegisterPanelCommand("medic", ToggleMedicPanel)
+    Core.RegisterModuleCommand("ArgentisMedic", "/ag medic")
 
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.1 Loaded.")
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.2 Loaded.")
     DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r Configuração: |cffffffff/ag medic|r")
 end)
