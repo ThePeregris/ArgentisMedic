@@ -2,7 +2,7 @@
 ## Title: Argentis |cffff0000Medic|r
 ## Notes: Smart Combat Sustain (Heal/Mana) + Post-Combat Recovery
 ## Author: ThePeregris
-## Version: 1.4
+## Version: 1.8
 ## SavedVariables: ArgentisMedDB
 ## Dependencies: ArgentisCore
 ## DefaultState: enable

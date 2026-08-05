@@ -1,6 +1,6 @@
 -- [[ Argentis |cffff0000Medic|r ]]
 -- Author:  ThePeregris
--- Version: 1.4 (Abas renomeadas: Heal/Mana/Recovery)
+-- Version: 1.8 (Avisos de Heal/Mana agora são alertas persistentes, não UIErrorsFrame)
 -- Target:  Turtle WoW (1.12 / LUA 5.0)
 -- Requires: Argentis Core v1.3+
 
@@ -87,24 +87,28 @@ end
 -- ==========================================
 -- [2] MONITOR PASSIVO (avisos em combate)
 -- ==========================================
-local lastHealWarn = 0
-local lastManaWarn = 0
-local WARN_INTERVAL = 3
+-- Alertas persistentes (ficam visíveis enquanto a condição for verdadeira,
+-- não somem sozinhos como o UIErrorsFrame). Posicionados acima do alerta
+-- de Sunder do Warrior (-150) pra não sobrepor caso os dois módulos
+-- estejam ativos ao mesmo tempo.
+local HealAlert = UI.CreatePersistentAlert("|cffff2020Heal baixo - ative /agmed1!|r", 0, -100)
+local ManaAlert = UI.CreatePersistentAlert("|cff3399ffMana baixa - ative /agmed2!|r", 0, -124)
 
 local monitorFrame = CreateFrame("Frame")
 monitorFrame:SetScript("OnUpdate", function()
-    if not ArgentisMedDB or not ArgentisMedDB.Enabled then return end
-    if not UnitAffectingCombat("player") then return end
+    if not ArgentisMedDB or not ArgentisMedDB.Enabled or not UnitAffectingCombat("player") then
+        HealAlert:Hide()
+        ManaAlert:Hide()
+        return
+    end
 
-    local now = GetTime()
     local db = ArgentisMedDB
 
     if db.Heal.Enabled then
         local hp = Core.GetHealthPct("player")
-        if hp <= db.Heal.Threshold and (now - lastHealWarn) > WARN_INTERVAL then
-            UIErrorsFrame:AddMessage("|cffff2020[Medic] Ative /agmed1 - Cura Baixa!|r", 1.0, 0.2, 0.2, 1.0, 3)
-            lastHealWarn = now
-        end
+        if hp <= db.Heal.Threshold then HealAlert:Show() else HealAlert:Hide() end
+    else
+        HealAlert:Hide()
     end
 
     if db.Mana.Enabled then
@@ -114,11 +118,12 @@ monitorFrame:SetScript("OnUpdate", function()
         end
         if isManaUser then
             local mp = Core.GetManaPct("player")
-            if mp <= db.Mana.Threshold and (now - lastManaWarn) > WARN_INTERVAL then
-                UIErrorsFrame:AddMessage("|cff3399ff[Medic] Ative /agmed2 - Mana Baixa!|r", 0.2, 0.6, 1.0, 1.0, 3)
-                lastManaWarn = now
-            end
+            if mp <= db.Mana.Threshold then ManaAlert:Show() else ManaAlert:Hide() end
+        else
+            ManaAlert:Hide()
         end
+    else
+        ManaAlert:Hide()
     end
 end)
 
@@ -127,27 +132,58 @@ end)
 -- ==========================================
 function Medic.Shortcut1_Heal()
     local db = ArgentisMedDB
-    if not db.Enabled or not db.Heal.Enabled then return end
+    if not db.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Módulo desativado (ver /ag medic).")
+        return
+    end
+    if not db.Heal.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Atalho Heal desativado (ver /ag medic).")
+        return
+    end
 
     local hp = Core.GetHealthPct("player")
-    if hp > db.Heal.Threshold then return end
+    if hp > db.Heal.Threshold then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Medic]|r HP em " .. math.floor(hp) .. "%, acima do limite (" .. db.Heal.Threshold .. "%). Nada a fazer.")
+        return
+    end
 
-    Medic_UseFromList(HealItems)
+    if not Medic_UseFromList(HealItems) then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Nenhuma poção/pedra de cura encontrada na bag!")
+    end
 end
 
 function Medic.Shortcut2_Mana()
     local db = ArgentisMedDB
-    if not db.Enabled or not db.Mana.Enabled then return end
+    if not db.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Módulo desativado (ver /ag medic).")
+        return
+    end
+    if not db.Mana.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Atalho Mana desativado (ver /ag medic).")
+        return
+    end
 
     local mp = Core.GetManaPct("player")
-    if mp > db.Mana.Threshold then return end
+    if mp > db.Mana.Threshold then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff3399ff[Medic]|r Mana em " .. math.floor(mp) .. "%, acima do limite (" .. db.Mana.Threshold .. "%). Nada a fazer.")
+        return
+    end
 
-    Medic_UseFromList(ManaItems)
+    if not Medic_UseFromList(ManaItems) then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Nenhuma poção de mana encontrada na bag!")
+    end
 end
 
 function Medic.Shortcut3_PostCombat()
     local db = ArgentisMedDB
-    if not db.Enabled or not db.Post.Enabled then return end
+    if not db.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Módulo desativado (ver /ag medic).")
+        return
+    end
+    if not db.Post.Enabled then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Atalho Recovery desativado (ver /ag medic).")
+        return
+    end
 
     if UnitAffectingCombat("player") then
         DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Não é possível usar em combate.")
@@ -155,7 +191,15 @@ function Medic.Shortcut3_PostCombat()
     end
 
     local hp = Core.GetHealthPct("player")
-    if hp > db.Post.Threshold then return end
+    if hp > db.Post.Threshold then
+        DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[Medic]|r HP em " .. math.floor(hp) .. "%, acima do limite (" .. db.Post.Threshold .. "%). Recovery não necessário.")
+        return
+    end
+
+    if not db.Post.UseBandage and not db.Post.UseFood then
+        DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Bandagem e Comida estão desativadas (ver /ag medic).")
+        return
+    end
 
     if db.Post.UseBandage then
         local blocked = false
@@ -171,17 +215,20 @@ function Medic.Shortcut3_PostCombat()
             DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Bloqueado: debuff de bandagem ativo.")
         else
             if Medic_UseFromList(BandageItems) then return end
+            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Nenhuma bandagem encontrada na bag!")
         end
     end
 
     if db.Post.UseFood then
-        Medic_UseFoodBySubtype()
+        if not Medic_UseFoodBySubtype() then
+            DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Medic]|r Nenhuma comida encontrada na bag!")
+        end
     end
 end
 
-SLASH_AGMED1_1 = "/agmed1"; SlashCmdList["AGMED1"] = Medic.Shortcut1_Heal
-SLASH_AGMED2_1 = "/agmed2"; SlashCmdList["AGMED2"] = Medic.Shortcut2_Mana
-SLASH_AGMED3_1 = "/agmed3"; SlashCmdList["AGMED3"] = Medic.Shortcut3_PostCombat
+SLASH_AGMEDH1 = "/agmed1"; SlashCmdList["AGMEDH"] = Medic.Shortcut1_Heal
+SLASH_AGMEDM1 = "/agmed2"; SlashCmdList["AGMEDM"] = Medic.Shortcut2_Mana
+SLASH_AGMEDP1 = "/agmed3"; SlashCmdList["AGMEDP"] = Medic.Shortcut3_PostCombat
 
 -- ==========================================
 -- [3.1] BOTÃO ÚNICO (SMART BUTTON)
@@ -342,18 +389,17 @@ end
 local loadFrame = CreateFrame("Frame")
 loadFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 loadFrame:SetScript("OnEvent", function()
-    if not ArgentisMedDB then
-        ArgentisMedDB = {
-            Enabled = true,
-            Heal = { Enabled = true, Threshold = 50 },
-            Mana = { Enabled = true, Threshold = 30 },
-            Post = { Enabled = true, Threshold = 90, UseBandage = true, UseFood = true }
-        }
-    end
+    if not ArgentisMedDB then ArgentisMedDB = {} end
+    Core.ApplyDefaults(ArgentisMedDB, {
+        Enabled = true,
+        Heal = { Enabled = true, Threshold = 50 },
+        Mana = { Enabled = true, Threshold = 30 },
+        Post = { Enabled = true, Threshold = 90, UseBandage = true, UseFood = true }
+    })
 
     Core.RegisterPanelCommand("medic", ToggleMedicPanel)
     Core.RegisterModuleCommand("ArgentisMedic", "/ag medic")
 
-    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.4 Loaded.")
+    DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r v1.8 Loaded.")
     DEFAULT_CHAT_FRAME:AddMessage("|cffff0000[Argentis Medic]|r Configuração: |cffffffff/ag medic|r")
 end)
